@@ -1,16 +1,88 @@
 package team.opay.leecode_practice;
 
-import java.lang.reflect.Array;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
 class LeeCodeTestJava {
+    static int lo, maxLen;
+
     public static void main(String[] args) {
-        int[] nums1 = new int[]{1, 3};
-        int[] nums2 = new int[]{2};
-        double result = findMedianSortedArrays(nums1, nums2);
+        int result = myAtoi(" -0 123");
         System.out.println(result);
+    }
+
+    public static int myAtoi(String str) {
+        str = str.trim();
+        if (str.isEmpty()) return 0;
+        int sign = 1, base = 0, i = 0;
+        while ((str.charAt(i) + "").equals(" "))
+            i++;
+        if (str.charAt(i) == '-' || str.charAt(i) == '+')
+            sign = str.charAt(i++) == '-' ? -1 : 1;
+        while (i < str.length() && Character.isDigit(str.charAt(i))) {
+            if (base > Integer.MAX_VALUE / 10 || (base == Integer.MAX_VALUE / 10 && str.charAt(i) - '0' > 7)) {
+                return (sign == 1) ? Integer.MAX_VALUE : Integer.MIN_VALUE;
+            }
+            base = 10 * base + (str.charAt(i++) - '0');
+        }
+        return sign * base;
+
+        //        String sign = "";
+//        StringBuilder stringBuilder = new StringBuilder();
+//        s = s.trim().replace(" ", "");
+//        if (s.startsWith())
+//        for (int i = 0; i < s.length(); i++) {
+//            char temp = s.charAt(i);
+//            if ((temp + "").equals("-") || (temp + "").equals("+")) {
+//                sign = temp + "";
+//            }
+//            if (Character.isDigit(temp)) {
+//                stringBuilder.append(temp);
+//                if (stringBuilder.toString().startsWith("0")) {
+//                    stringBuilder = stringBuilder.replace(0, 1, "");
+//                }
+//            }
+//        }
+//
+//        int result;
+//        if (sign.equals("-")) {
+//            result = -Integer.parseInt(stringBuilder.toString());
+//        } else {
+//            result = Integer.parseInt(stringBuilder.toString());
+//        }
+//        return result;
+    }
+
+    public static int reverse(int x) {
+        int result = 0;
+        while (x != 0) {
+            int tail = x % 10;
+            int newResult = result * 10 + tail;
+            if ((newResult - tail) / 10 != result) return 0;
+            result = newResult;
+            x = x / 10;
+        }
+        return result;
+    }
+
+    public static String longestPalindrome(String s) {
+        if (s.length() < 2) return s;
+        for (int i = 0; i < s.length() - 1; i++) {
+            extendPalindrome(s, i, i);
+            extendPalindrome(s, i, i + 1);
+        }
+        return s.substring(lo, lo + maxLen);
+    }
+
+    public static void extendPalindrome(String s, int j, int k) {
+        while (j >= 0 && k < s.length() && s.charAt(j) == s.charAt(k)) {
+            j--;
+            k++;
+        }
+        if (maxLen < k - j - 1) {
+            lo = j + 1;
+            maxLen = k - j - 1;
+        }
     }
 
     /**
@@ -22,20 +94,27 @@ class LeeCodeTestJava {
      * 链接：https://leetcode-cn.com/problems/median-of-two-sorted-arrays
      * 著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
      */
-    public static double findMedianSortedArrays(int[] nums1, int[] nums2) {
-        ArrayList<Integer> set = new ArrayList();
-        for (int i = 0; i < nums1.length; i++) {
-            set.add(nums1[i]);
+    public static double findMedianSortedArrays(int[] A, int[] B) {
+        int m = A.length;
+        int n = B.length;
+        int l = (m + n + 1) / 2;
+        int r = (m + n + 2) / 2;
+        return (getkth(A, 0, B, 0, l) + getkth(A, 0, B, 0, r)) / 2.0;
+    }
 
-            for (int j = 0; j < nums1.length; j++) {
-                if (!set.contains(nums2[j]) && nums1[i] < nums2[j]) {
-                    set.add(nums2[j]);
-                }
-            }
+    public static double getkth(int[] A, int aStart, int[] B, int bStart, int k) {
+
+        if (aStart > A.length - 1) return B[bStart + k - 1];
+        if (bStart > B.length - 1) return A[aStart + k - 1];
+        if (k == 1) return Math.min(A[aStart], B[bStart]);
+        int aMid = Integer.MAX_VALUE, bMid = Integer.MAX_VALUE;
+        if (aStart + k / 2 - 1 < A.length) aMid = A[aStart + k / 2 - 1];
+        if (bStart + k / 2 - 1 < B.length) bMid = B[bStart + k / 2 - 1];
+        if (aMid < bMid) {
+            return getkth(A, aStart + k / 2, B, bStart, k - k / 2);
+        } else {
+            return getkth(A, aStart, B, bStart + k / 2, k - k / 2);
         }
-        set.toArray();
-        Array[] a = set.toArray(set);
-        return 1.0f;
     }
 
     public static int lengthOfLongestSubstring(String s) {
