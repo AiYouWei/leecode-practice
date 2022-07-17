@@ -1,14 +1,90 @@
 package team.opay.leecode_practice;
 
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 class LeeCodeTestJava {
     static int lo, maxLen;
 
     public static void main(String[] args) {
-        int result = myAtoi(" -0 123");
-        System.out.println(result);
+        int i = 0;
+
+        System.out.println(++i);
+
+    }
+    public static ExecutorService newSingleThreadExecutor(ThreadFactory threadFactory) {
+        return (new ThreadPoolExecutor(1, 1,
+                        0L, TimeUnit.MILLISECONDS,
+                        new LinkedBlockingQueue<Runnable>(),
+                        threadFactory));
+    }
+
+    public static int[] findDiagonalOrder(int[][] mat) {
+        if (mat == null || mat.length == 0) {
+            return new int[0];
+        }
+        int n = mat.length;
+        int m = mat[0].length;
+        int[] result = new int[m * n];
+        int k = 0;
+        ArrayList<Integer> intermediate = new ArrayList<>();
+        for (int d = 0; d < m + n - 1; d++) {
+            intermediate.clear();
+            int r = d < m ? 0 : d - m + 1;
+            int c = d < m ? d : m - 1;
+            while (r < n && c > -1) {
+                intermediate.add(mat[r][c]);
+                ++r;
+                --c;
+            }
+            if (d % 2 == 0) {
+                Collections.reverse(intermediate);
+            }
+            for (int i = 0; i < intermediate.size(); i++) {
+                result[k++] = intermediate.get(i);
+            }
+        }
+
+        return result;
+    }
+
+    public static int singleNumber(int[] nums) {
+        if (nums.length == 0) {
+            System.out.println("nums is null or empty");
+            return 0;
+        }
+        int temp = 0, result = 0;
+        for (int i = 0; i < nums.length; i++) {
+            if (nums[i] == temp) {
+                result++;
+            }
+            temp = nums[i];
+        }
+        return 0;
+    }
+
+    public static void proxy() {
+        Object a = new Object();
+        Object b = Proxy.newProxyInstance(a.getClass().getClassLoader(), a.getClass().getInterfaces(), new InvocationHandler() {
+            @Override
+            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                if (method.getName().equals("toString")) {
+                    Object result = method.invoke(a, args);
+                    return result;
+                }
+                return null;
+            }
+        });
     }
 
     public static int myAtoi(String str) {
@@ -217,7 +293,22 @@ class LeeCodeTestJava {
         }
         return dummyHead.next;
     }
+}
 
+class ProxyHandler implements InvocationHandler {
+    private Object object;
+
+    public ProxyHandler(Object object) {
+        this.object = object;
+    }
+
+    @Override
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        if (method.getName().equals(""))
+        method.invoke(object,args);
+
+        return null;
+    }
 }
 
 class ListNode {
@@ -236,3 +327,71 @@ class ListNode {
         this.next = next;
     }
 }
+
+/**
+ * 字节码插桩
+ * Java 翻译 jvm 二进制数据 class文件
+ * FileInputStream
+ * byte[]修改byte[]数组中的数据 从而达到修改class文件，修改代码执行逻辑的目的
+ * 必须按照class的格式来修改
+ * 框架
+ * json->Gson/fastjson
+ * class->javassist/ams/....
+ * 让原来app中所有的class，都引用一下hack.dex中的Load类
+ * 这样app中的所有的class都不会被打上标记，这样app所有的class都能执行热修复
+ * 打包进apk的class，所以要干预打包过程
+ *
+ * gradle\插桩
+ * 1、应该在什么时候修改class
+ * compileDebugJavaWithJavac 把Java文件编译成class文件
+ * // 执行插桩
+ * transformClassesWithDexBuilderForDebug class生成dex文件任务
+ * 2、怎样获得所有要操作的class文件
+ * transformClassesWithDexBuilderForDebug 需要获得所有要打包的class吗？
+ * transformClassesWithDexBuilderForDebug 输入就是所有的class
+ * 输出的就是dex文件
+ *
+ * 排除一些class不执行插桩
+ * 不需要热修复的class就不用插桩了
+ *
+ * Application能修复吗？不能 排除
+ * AppCompat 官方的第三方库 兼容库 不需要修复 排除
+ *
+ *
+ *
+ * 插件化
+ *
+ * 什么是插件化
+ * 什么是双亲委托机制
+ * 如何实现插件类的加载
+ *
+ * 插件化技术最初源于免安装运行apk的想法
+ * 这个免安装的apk就可以理解为插件，而支持插件的app我们一般叫宿主
+ *
+ * 插件化解决的问题
+ * 1、APP的功能模块越来越多，体积越来越大
+ * 2、模块之间的耦合度高，协同开发沟通成本越来越大
+ * 3、方法数目可能超过65535，APP占用的内存过大
+ * 4、应用之间的互相调用
+ *
+ * 插件化与组件化的区别
+ *
+ * 组件化开发就是将一个app分成多个模块，每个模块都是一个组件，开发的过程中 我们可以让这些组件相互依赖或者单独调试部分组件等
+ * 但是最终发布的时候 是将这些组件合并统一成一个apk，这就是组件化开发
+ *
+ * 插件化开发和组件化略有不同，插件化开发是将整个app拆分成多个模块，这些模块包括一个宿主和多个插件，每个模块都是一个apk
+ * 最终打包的时候宿主和插件apk分开打包
+ *
+ * 各大插件化对比
+ *
+ * dynamic-load-apk
+ *
+ * droidPlugin
+ * VirtualAPK
+ *
+ * 插件化实现思路
+ * 1、如何加载插件的类
+ * 2、如何加载插件的资源
+ * 3、如何调用插件类
+ *
+ * */
